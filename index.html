@@ -255,7 +255,10 @@
             pointer-events: auto;
             border-radius: 8px;
         }
-        button:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 30px rgba(0, 243, 255, 0.6); transform: scale(1.05); }
+        @media (hover: hover) and (pointer: fine) {
+            button:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 30px rgba(0, 243, 255, 0.6); transform: scale(1.05); }
+        }
+        button:active { background: var(--neon-blue); color: #000; box-shadow: 0 0 30px rgba(0, 243, 255, 0.6); transform: scale(1.05); }
 
         .file-zone { display: flex; gap: 40px; margin-bottom: 30px; pointer-events: auto; justify-content: center;}
         .file-box { 
@@ -593,7 +596,7 @@
 
 <div id="menu-screen" class="overlay">
     <div id="start-overlay" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,1); z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer;">
-        <h2 style="color:#fff; margin-bottom: 0px;">Project</h2>
+        
 	<h1 style="margin-bottom: 0px; font-size: 3rem; "><img src="assets/logo.svg" class="main-logo-svg" onerror="this.style.display='none'"></h1>
         <h3 style="color:#fff; margin-top: 0px; margin-bottom: 20px; text-align: center;">Development Version</h3>
 	
@@ -606,22 +609,25 @@
 
     <div id="menu-main-content" style="visibility: hidden; width: 100%; display: flex; flex-direction: column; align-items: center; overflow-y: auto; max-height: 100vh; padding: 20px; box-sizing: border-box;">
 
-	    <h2 style="color:#fff; margin-bottom: 0px;">Project</h2>
+	    
 	    <h1 style="margin-bottom: 0px; font-size: 3rem; "><img src="assets/logo.svg" class="main-logo-svg" onerror="this.style.display='none'"></h1>
-        <h3 style="color:#fff; margin-top:0px; margin-bottom: 40px; text-align: center;">Development Version</h3>
+        <h3 style="color:#fff; margin-top:0px; margin-bottom: 40px; text-align: center;">Development Version 10.2</h3>
 	
         <div class="file-zone">
             <div class="file-box" id="box-folder" onclick="document.getElementById('inp-folder').click()">
                 <label id="label-folder" style="pointer-events: none;">
                     <span style="color:var(--neon-blue)" data-i18n="play_music">PLAY YOUR MUSIC</span>
                     <br><span data-i18n="music_desc">(Select Folder)</span><br>
-                    <span style="font-size: 12px; color: #888;">MP3/WAV/MP4</span><br><br>
+                    <span style="font-size: 12px; color: #888;">MP3/WAV/MP4</span><br>
                 </label>
                 <input type="file" id="inp-folder" webkitdirectory directory multiple onchange="handleDirectorySelect(this.files)">
             </div>
         </div>
+<a href="https://www.youtube.com/@garyhou7764" target="_blank rel="noopener" ; style="color:var(--neon-blue);margin-top: 20px; text-align: center; text-decoration: none;" data-i18n="news_update">Follow the YouTube channel for the latest information.</a>
+
 <p style="color:#888; margin-bottom: 0px; margin-top: 20px; letter-spacing:2px;" data-i18n="thank_you_all">If you enjoy my work, please support me to create more interesting things :D</p>
-        <a href="https://www.buymeacoffee.com/CurryTarouWorks" style="margin-top: 20px;"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=CurryTarouWorks&button_colour=FF5F5F&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00" /></a>
+        <a href="https://www.buymeacoffee.com/CurryTarouWorks" target="_blank style="margin-top: 20px;"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=CurryTarouWorks&button_colour=FF5F5F&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00" /></a>
+
         <p style="color:#888; margin-bottom: 0px; margin-top: 20px; letter-spacing:2px;" data-i18n="game_settings">GAME SETTINGS</p>
         
         <div class="lang-selector">
@@ -651,6 +657,10 @@
             </div>
         </div>
     </div>
+
+            <div class="light-pillar-wrapper">
+    		<div class="diff-light-pillar"></div>
+		</div>
 
 	<span style="color:#fff; margin-top: 30px; margin-bottom:30px; text-align: center;">© 2026 CurryTarou Works</span>
 </div>
@@ -687,9 +697,9 @@
         <div class="ss-controls">
             <div class="ss-speed-wrap">
                 <span style="color: var(--neon-blue);" data-i18n="speed">SPEED:</span>
-                <button class="diff-btn" onclick="changeSpeed(-1)" style="width: 40px; height: 40px; padding: 0; display: flex; justify-content: center; align-items: center;">-</button>
+                <button class="diff-btn" onclick="changeSpeed(-1)" style="width: 40px; height: 40px; min-width: 40px; padding: 0; display: flex; justify-content: center; align-items: center; box-sizing: border-box;">-</button>
                 <h2 id="speed-display" style="display: inline-block; width: 80px; text-align: center; font-size: 20px; margin:0;">1.00x</h2>
-                <button class="diff-btn" onclick="changeSpeed(1)" style="width: 40px; height: 40px; padding: 0; display: flex; justify-content: center; align-items: center;">+</button>
+                <button class="diff-btn" onclick="changeSpeed(1)" style="width: 40px; height: 40px; min-width: 40px; padding: 0; display: flex; justify-content: center; align-items: center; box-sizing: border-box;">+</button>
             </div>
             <div class="ss-diff-wrap btn-group" style="margin-top:0;">
                 <button tabindex="-1" onclick="playMenuImpact(); initSelectedGame(0.7)">EASY</button>
@@ -754,7 +764,7 @@
 
         <div style="font-size:20px; color:#888; margin: 10px 0;"><span data-i18n="score">SCORE:</span> <span id="res-score" style="color:#fff">0</span></div>
 <p style="color:#888; margin-bottom: 0px; margin-top: 20px; letter-spacing:2px;" data-i18n="thank_you_all">If you enjoy my work, please support me to create more interesting things :D</p>
-<a href="https://www.buymeacoffee.com/CurryTarouWorks" style="margin-top: 20px;"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=CurryTarouWorks&button_colour=FF5F5F&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00" /></a>
+<a href="https://www.buymeacoffee.com/CurryTarouWorks" target="_blank style="margin-top: 20px;"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a coffee&emoji=☕&slug=CurryTarouWorks&button_colour=FF5F5F&font_colour=ffffff&font_family=Lato&outline_colour=000000&coffee_colour=FFDD00" /></a>
 
         <div class="btn-group">
             <button onclick="playMenuImpact(); retryGame()" data-i18n="play_again">PLAY AGAIN</button>
@@ -784,7 +794,7 @@ const Locales = {
         'play_video': '動画付きでプレイ', 'speed': '速度:', 'paused': '一時停止', 'resume': '再開', 'retry': 'リトライ',
         'title': 'タイトルへ', 'stage_clear': 'ステージクリア', 'game_over': 'ゲームオーバー', 'max_combo': '最大コンボ',
         'score': 'スコア:', 'play_again': 'もう一度プレイ', 'fever_active': 'フィーバーモード', 'loading': '読み込み中...',
-        'tab_all': 'すべて', 'thank_you_all': '楽しんでいただけたら、もっと面白い作品作りを応援してください :D'
+        'tab_all': 'すべて', 'news_update': '➤ 最新情報はYouTubeチャンネルをフォローしてください。', 'thank_you_all': '楽しんでいただけたら、もっと面白い作品作りを応援してください :D'
     },
     'tw': {
         'play_music': '選擇你的音樂', 'music_desc': '(選擇資料夾)', 'game_settings': '遊戲設定', 'volume': '音量', 'offset': '判定調整',
@@ -792,7 +802,7 @@ const Locales = {
         'play_video': '使用影片播放', 'speed': '速度:', 'paused': '暫停', 'resume': '繼續', 'retry': '重試',
         'title': '回標題', 'stage_clear': '關卡完成', 'game_over': '遊戲結束', 'max_combo': '最大連擊',
         'score': '分數:', 'play_again': '再玩一次', 'fever_active': '狂熱模式啟動', 'loading': '讀取中...',
-        'tab_all': '全部', 'thank_you_all': '如果您玩得開心，請支持我繼續創作更有趣的作品 :D'
+        'tab_all': '全部', 'news_update': '➤ 最新情報請關注YouTube頻道', 'thank_you_all': '如果您玩得開心，請支持我繼續創作更有趣的作品 :D'
     },
     'en': {
         'play_music': 'PLAY YOUR MUSIC', 'music_desc': '(Select Folder)', 'game_settings': 'GAME SETTINGS', 'volume': 'VOLUME', 'offset': 'OFFSET',
@@ -800,7 +810,7 @@ const Locales = {
         'play_video': 'PLAY WITH VIDEO', 'speed': 'SPEED:', 'paused': 'PAUSED', 'resume': 'RESUME', 'retry': 'RETRY',
         'title': 'TITLE', 'stage_clear': 'STAGE CLEAR', 'game_over': 'GAME OVER', 'max_combo': 'MAX COMBO',
         'score': 'SCORE:', 'play_again': 'PLAY AGAIN', 'fever_active': 'FEVER MODE ACTIVE', 'loading': 'LOADING...',
-        'tab_all': 'ALL','thank_you_all': 'If you enjoy my work, please support me to create more interesting things :D'
+        'tab_all': 'ALL', 'news_update': '➤ Follow the YouTube channel for the latest information.','thank_you_all': 'If you enjoy my work, please support me to create more interesting things :D'
     }
 };
 
@@ -1147,8 +1157,8 @@ function renderSongList() {
     
     if(filteredLibrary.length === 0) return;
 
-    // 固定渲染 7 個插槽: index (-1 到 5)，確保選擇項目(0)永遠在第二格
-    let offsets = [-1, 0, 1, 2, 3, 4, 5];
+    // 固定渲染 7 個插槽: PC版維持第二格，手機版強制置中
+    let offsets = (IS_MOBILE || window.innerWidth <= 768) ? [-3, -2, -1, 0, 1, 2, 3] : [-1, 0, 1, 2, 3, 4, 5];
     
     offsets.forEach(offset => {
         let realIndex = (selectedSongIndex + offset + filteredLibrary.length) % filteredLibrary.length;
