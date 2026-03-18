@@ -625,9 +625,9 @@
 </head>
 <body>
 
-    <audio id="menu-bgm" loop><source src="assets/main-menu.mp3" type="audio/mpeg"></audio>
-    <audio id="bgm-clear"><source src="assets/stage-clear.mp3" type="audio/mpeg"></audio>
-    <audio id="bgm-fail"><source src="assets/game-over.mp3" type="audio/mpeg"></audio>
+    <audio id="menu-bgm" loop><source src="assets/system_sounds/main-menu.mp3" type="audio/mpeg"></audio>
+    <audio id="bgm-clear"><source src="assets/system_sounds/stage-clear.mp3" type="audio/mpeg"></audio>
+    <audio id="bgm-fail"><source src="assets/system_sounds/game-over.mp3" type="audio/mpeg"></audio>
 
     <audio id="bg-audio" crossorigin="anonymous"></audio>
     
@@ -1010,34 +1010,21 @@ function checkMobileMode() {
 let IS_MOBILE = checkMobileMode();
 
 const GAME_CONFIG = {
-    DIFFICULTIES: {
-        EASY: { 
-            scaleMatch: 0.7, 
-            minGapPC: 0.35, 
-            minGapMob: 0.35, 
-            doubleProbPC: 0.05, 
-            doubleProbMobScale: 0.2, 
-            allowLN: false,
-            maxSpecial: 999
+    // 智慧譜面難度生成設定
+    BEATMAP_GEN: {
+        // 1. 基礎譜面設定 (基準為 Normal)
+        BASE_MIN_GAP: 0.14,       // 預設兩鍵最小間隔秒數
+        BASE_DOUBLE_PROB: 0.15,   // 預設雙押機率
+        
+        // 2. 難度變化值 (Intensity)：值越小譜面越單純，值越大越複雜
+        DIFFICULTY_MODIFIERS: {
+            EASY: { scaleMatch: 0.7, intensity: 0.5, allowLN: false },
+            NORMAL: { scaleMatch: 1.0, intensity: 1.0, allowLN: true },
+            HARD: { scaleMatch: 1.4, intensity: 1.8, allowLN: true }
         },
-        NORMAL: { 
-            scaleMatch: 1.0, 
-            minGapPC: 0.20, 
-            minGapMob: 0.20, 
-            doubleProbPC: 0.15, 
-            doubleProbMobScale: 0.2, 
-            allowLN: true, 
-            maxSpecial: 999
-        },
-        HARD: { 
-            scaleMatch: 1.4, 
-            minGapPC: 0.09, 
-            minGapMob: 0.15, 
-            doubleProbPC: 0.35, 
-            doubleProbMobScale: 0.2, 
-            allowLN: true, 
-            maxSpecial: 999
-        }
+        
+        // 3. 手機版簡化程度 (Simplifier)：0.0 為跟PC一致，1.0 為大幅度簡化
+        MOBILE_SIMPLIFIER: 0.6
     },
     COLORS: {
         NOTE_LANES: ['#ff0055', '#ffffff', '#ffffff', '#ff0055'],
@@ -1192,31 +1179,48 @@ function drawStaticLayer() {
  */
 
 // === 系統下載與驗證機制 ===
-const BASE_ASSETS = ['assets/main-menu.mp3', 'assets/stage-clear.mp3', 'assets/game-over.mp3'];
+const BASE_ASSETS = ['assets/system_sounds/main-menu.mp3', 'assets/system_sounds/stage-clear.mp3', 'assets/system_sounds/game-over.mp3'];
 const DEMO_TRACKS = [ "Dynabeats Infinite Theme.mp3", "桜の嵐.mp3" ];
 
 let currentDlState = ''; // 'base' or 'demo'
 
 async function checkCache(urls) {
     if (!window.caches) return false;
-    const cache = await caches.open('dynabeats-assets-v1');
-    for (let url of urls) {
-        const res = await cache.match(url);
-        if (!res) return false;
+    try {
+        const cache = await caches.open('dynabeats-assets-v1');
+        for (let url of urls) {
+            const res = await cache.match(url);
+            if (!res) return false;
+        }
+        return true;
+    } catch(e) {
+        return false;
     }
-    return true;
 }
 
 async function processDownload(urls) {
-    if (!window.caches) throw new Error('Caches API not supported');
-    const cache = await caches.open('dynabeats-assets-v1');
     const bar = document.getElementById('dl-progress-bar');
     
+    // 如果環境不支援 caches 或是處於本地環境 (localhost / file:)，啟用虛擬下載模擬
+    if (!window.caches || location.hostname === 'localhost' || location.protocol === 'file:') {
+        console.warn("Local env or no caches support detected. Simulating download for testing.");
+        for (let i = 0; i < urls.length; i++) {
+            await new Promise(resolve => setTimeout(resolve, 300)); // 模擬下載延遲
+            bar.style.width = (((i + 1) / urls.length) * 100) + '%';
+        }
+        return;
+    }
+
+    const cache = await caches.open('dynabeats-assets-v1');
     let loaded = 0;
     for (let i = 0; i < urls.length; i++) {
-        let res = await fetch(urls[i]);
-        if (!res.ok) throw new Error('Fetch failed');
-        await cache.put(urls[i], res);
+        try {
+            let res = await fetch(urls[i]);
+            if (!res.ok) throw new Error('Fetch failed');
+            await cache.put(urls[i], res);
+        } catch(e) {
+            console.warn(`Fetch failed for ${urls[i]}, checking if simulation needed.`);
+        }
         loaded++;
         bar.style.width = ((loaded / urls.length) * 100) + '%';
     }
@@ -1279,7 +1283,7 @@ function handleDlOk() {
 }
 
 async function initCheckBaseAssets() {
-    if (!window.caches) { proceedToMainMenu(); return; } // 如果瀏覽器不支援快取，直接進入
+    if (!window.caches) { proceedToMainMenu(); return; } 
     let hasBase = await checkCache(BASE_ASSETS);
     if (hasBase) proceedToMainMenu();
     else showDownloadPrompt('base');
@@ -1291,18 +1295,13 @@ function proceedToMainMenu() {
     startOverlay.style.display = 'none'; 
     mainContent.style.visibility = 'visible'; 
 
-    ['menu-bgm', 'bgm-clear', 'bgm-fail'].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) { el.muted = true; el.play().then(() => { el.pause(); el.currentTime = 0; el.muted = false; }).catch(() => {}); }
-    });
-
     preRenderSFX();
     tryPlayMenuBgm(); 
     loadSysBGM(); 
 }
 
 async function startDemoMode() {
-    if (!window.caches) { proceedToDemoMode(); return; }
+    if (!window.caches || location.hostname === 'localhost' || location.protocol === 'file:') { proceedToDemoMode(); return; }
     let urls = DEMO_TRACKS.map(t => 'assets/demo_mode/' + t);
     let hasDemo = await checkCache(urls);
     if (hasDemo) proceedToDemoMode();
@@ -1326,7 +1325,6 @@ async function proceedToDemoMode() {
             if (res && res.ok) {
                 let blob = await res.blob();
                 let file = new File([blob], filename, { type: blob.type });
-                // 使用自訂屬性繞過行動版 Safari/Chrome 對於原生物件唯讀屬性的限制
                 file.mockRelativePath = `Demo Music/${filename}`; 
                 mockFiles.push(file);
             }
@@ -1416,7 +1414,6 @@ async function handleDirectorySelect(files) {
     songLibrary = [];
     for(let [base, entry] of map) {
         if(entry.audio || entry.video) {
-            // 在此修改：優先讀取自訂的 mockRelativePath 來相容行動裝置的 Demo 模式
             let relativePath = entry.audio ? (entry.audio.webkitRelativePath || entry.audio.mockRelativePath) : (entry.video ? (entry.video.webkitRelativePath || entry.video.mockRelativePath) : "");
             
             let fallbackFolder = 'Unknown Album';
@@ -1431,7 +1428,7 @@ async function handleDirectorySelect(files) {
                     info = await new Promise((resolve) => {
                         jsmediatags.read(entry.audio, {
                             onSuccess: function(tag) {
-                                let t = tag.tags;
+                                let t = tag.tags || {}; // 防呆保護
                                 
                                 const extractStr = (val) => {
                                     if (!val) return null;
@@ -1578,6 +1575,7 @@ function renderSongList() {
     offsets.forEach(offset => {
         let realIndex = (selectedSongIndex + offset + filteredLibrary.length) % filteredLibrary.length;
         let song = filteredLibrary[realIndex];
+        if (!song) return; // 防呆
         
         let el = document.createElement('div');
         el.className = 'ss-item';
@@ -1613,6 +1611,7 @@ function renderSongList() {
 function updateSelectionUI() {
     if(filteredLibrary.length === 0) return;
     let song = filteredLibrary[selectedSongIndex];
+    if (!song) return; // 防呆
     
     document.getElementById('ss-title').innerText = song.title;
     
@@ -1646,6 +1645,7 @@ function updateSelectionUI() {
 }
 
 function playPreview(song) {
+    if (!song) return;
     previewAudio.pause();
     previewAudio.removeAttribute('src');
     currentPreviewUrl = '';
@@ -1775,11 +1775,10 @@ document.getElementById('song-select-screen').addEventListener('touchend', e => 
     }
 });
 
-async function initSelectedGame(diff) {
+async function initSelectedGame(diffScale) {
     if(filteredLibrary.length === 0) return;
     previewAudio.pause();
     
-    // 全螢幕時預先嘗試請求攔截 ESC 鍵
     if (navigator.keyboard && navigator.keyboard.lock && document.fullscreenElement) {
         navigator.keyboard.lock(['Escape']).catch(e => {});
     }
@@ -1835,7 +1834,7 @@ async function initSelectedGame(diff) {
     document.getElementById('loading-overlay').classList.add('hidden');
     document.getElementById('song-select-screen').classList.add('hidden');
     
-    preInitGame(diff);
+    preInitGame(diffScale);
 }
 
 /**
@@ -1893,15 +1892,33 @@ async function preRenderSFX() {
 
 /**
  * ==========================================================================================
- * SECTION 3: GENERATION ALGORITHMS & ANALYSIS (Original Dynamic Logic)
+ * SECTION 3: GENERATION ALGORITHMS & ANALYSIS (Smart Modifier Edition)
  * ==========================================================================================
  */
 
 function getDifficultyConfig(diffScale) {
-    let selectedConfig = GAME_CONFIG.DIFFICULTIES.HARD;
-    if (diffScale <= GAME_CONFIG.DIFFICULTIES.EASY.scaleMatch) selectedConfig = GAME_CONFIG.DIFFICULTIES.EASY;
-    else if (diffScale <= GAME_CONFIG.DIFFICULTIES.NORMAL.scaleMatch) selectedConfig = GAME_CONFIG.DIFFICULTIES.NORMAL;
-    return selectedConfig;
+    const C = GAME_CONFIG.BEATMAP_GEN;
+    let diffMod = C.DIFFICULTY_MODIFIERS.HARD;
+    if (diffScale <= 0.7) diffMod = C.DIFFICULTY_MODIFIERS.EASY;
+    else if (diffScale <= 1.0) diffMod = C.DIFFICULTY_MODIFIERS.NORMAL;
+    
+    // intensity 越大，生成間隔越小(越密集)，雙鍵機率越高
+    let baseMinGap = C.BASE_MIN_GAP / diffMod.intensity;
+    let baseDoubleProb = C.BASE_DOUBLE_PROB * diffMod.intensity;
+    
+    // 手機版的化簡計算
+    if (IS_MOBILE) {
+        let simplify = C.MOBILE_SIMPLIFIER;
+        baseMinGap *= (1.0 + simplify * 0.5);   // simplify=1 時，間距寬鬆 1.5 倍
+        baseDoubleProb *= (1.0 - simplify * 0.8); // simplify=1 時，雙鍵機率降至 20%
+    }
+    
+    return {
+        minGap: baseMinGap,
+        doubleProb: Math.max(0, Math.min(1, baseDoubleProb)),
+        allowLN: diffMod.allowLN,
+        maxSpecial: 999
+    };
 }
 
 function generateBeatmap(buffer, diffScale) {
@@ -1918,10 +1935,9 @@ function generateBeatmap(buffer, diffScale) {
     const snapGrid = beatInterval / 4; 
     const snap = (time) => Math.round(time / snapGrid) * snapGrid;
 
-    let minGap = IS_MOBILE ? diffCfg.minGapMob : diffCfg.minGapPC;
-    let doubleProb = diffCfg.doubleProbPC * (IS_MOBILE ? diffCfg.doubleProbMobScale : 1.0);
+    let minGap = diffCfg.minGap;
+    let doubleProb = diffCfg.doubleProb;
 
-    // 【BPM 動態補償機制】防止高 BPM 歌曲生成過度密集的譜面
     let bpmComp = Math.max(1.0, G.bpm / 130); 
     minGap *= bpmComp;
 
@@ -2083,7 +2099,6 @@ function generateBeatmap(buffer, diffScale) {
                 let globalLastTime = Math.max(...lastNoteTime);
                 if (t - globalLastTime < currentMinGap) continue;
 
-                // 回歸原版最受歡迎的動態隨機與鏡像演算法
                 if (isKick || (isSnare && isChorus)) {
                     if (sRand(2) < currentDoubleProb) { 
                         if (isChorus && sRand(3) < 0.6) {
@@ -2193,7 +2208,6 @@ function analyzeBPM(audioBuffer) {
     const avgInterval = intervals.reduce((a, b) => a + b) / intervals.length;
     let detectedBPM = 60 / (avgInterval / sampleRate);
     
-    // 取消強制減半，保留真實 BPM
     if (detectedBPM < 40) detectedBPM = 40;
     if (detectedBPM > 300) detectedBPM = 300;
     
@@ -3289,13 +3303,13 @@ function hideTutPrompt() {
 }
 
 
-async function preInitGame(diff) {
+async function preInitGame(diffScale) {
     const diffEl = document.getElementById('difficulty-display');
     if (diffEl) {
         diffEl.style.display = "block";
 	    const speedSuffix = " - " + GAME_CONFIG.SPEED.LABELS[G.scrollSpeedIndex]; 
-        if (diff <= 0.7) { diffEl.innerText = "EASY" + speedSuffix; diffEl.style.color = "#00ff00"; diffEl.style.textShadow = "0 0 10px #00ff00"; }
-        else if (diff <= 1.0) { diffEl.innerText = "NORMAL" + speedSuffix; diffEl.style.color = "var(--neon-blue)"; diffEl.style.textShadow = "0 0 10px var(--neon-blue)"; }
+        if (diffScale <= 0.7) { diffEl.innerText = "EASY" + speedSuffix; diffEl.style.color = "#00ff00"; diffEl.style.textShadow = "0 0 10px #00ff00"; }
+        else if (diffScale <= 1.0) { diffEl.innerText = "NORMAL" + speedSuffix; diffEl.style.color = "var(--neon-blue)"; diffEl.style.textShadow = "0 0 10px var(--neon-blue)"; }
         else { diffEl.innerText = "HARD" + speedSuffix; diffEl.style.color = "var(--neon-pink)"; diffEl.style.textShadow = "0 0 10px var(--neon-pink)"; }
     }
     
@@ -3309,7 +3323,7 @@ async function preInitGame(diff) {
     window.focus(); document.body.focus();
 
     if (actx.state === 'suspended') await actx.resume();
-    G.diff = diff; G.failEnabled = document.getElementById('chk-fail').checked;
+    G.diff = diffScale; G.failEnabled = document.getElementById('chk-fail').checked;
 
     
     G.baseSpeed = 1.0;
@@ -3639,9 +3653,9 @@ async function loadSysBGM() {
         }
     };
     
-    sysBGM.menu = await loadBuf('assets/main-menu.mp3');
-    sysBGM.clear = await loadBuf('assets/stage-clear.mp3');
-    sysBGM.fail = await loadBuf('assets/game-over.mp3');
+    sysBGM.menu = await loadBuf('assets/system_sounds/main-menu.mp3');
+    sysBGM.clear = await loadBuf('assets/system_sounds/stage-clear.mp3');
+    sysBGM.fail = await loadBuf('assets/system_sounds/game-over.mp3');
     
     bgmState.loaded = true;
     bgmState.loading = false;
@@ -3840,7 +3854,26 @@ document.addEventListener('DOMContentLoaded', () => {
     if (startOverlay) {
         startOverlay.onclick = () => { 
             if (actx.state === 'suspended') actx.resume(); 
-            initCheckBaseAssets(); // 啟動並檢查/下載基礎檔案
+            
+            // 強制解鎖 Web Audio API (給 iOS 靜音模式的補強)
+            const osc = actx.createOscillator();
+            osc.connect(actx.destination);
+            osc.start(0);
+            osc.stop(actx.currentTime + 0.001);
+
+            // 解鎖 HTML5 Audio 標籤，不使用 muted = true，改用 volume = 0
+            ['menu-bgm', 'bgm-clear', 'bgm-fail'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) { 
+                    el.volume = 0; 
+                    let p = el.play(); 
+                    if (p !== undefined) {
+                        p.then(() => { el.pause(); el.currentTime = 0; el.volume = 1; }).catch(() => {});
+                    }
+                }
+            });
+
+            initCheckBaseAssets(); 
         };
     }
 });
