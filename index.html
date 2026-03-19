@@ -1013,7 +1013,8 @@ const GAME_CONFIG = {
     // 智慧譜面難度生成設定
     BEATMAP_GEN: {
         // 1. 基礎譜面設定 (基準為 Normal)
-        BASE_MIN_GAP: 0.14,       // 預設兩鍵最小間隔秒數
+        BASE_MIN_GAP: 0.20,       // 預設兩鍵最小間隔秒數 (影響整體密度)
+        BASE_CROSS_GAP: 0.08,     // 新增：跨軌道（階梯）音符的最小間隔秒數 (防重疊)
         BASE_DOUBLE_PROB: 0.15,   // 預設雙押機率
         
         // 2. 難度變化值 (Intensity)：值越小譜面越單純，值越大越複雜
@@ -1904,17 +1905,20 @@ function getDifficultyConfig(diffScale) {
     
     // intensity 越大，生成間隔越小(越密集)，雙鍵機率越高
     let baseMinGap = C.BASE_MIN_GAP / diffMod.intensity;
+    let baseCrossGap = C.BASE_CROSS_GAP / Math.max(1, diffMod.intensity * 0.5); // 階梯間距隨難度微調
     let baseDoubleProb = C.BASE_DOUBLE_PROB * diffMod.intensity;
     
     // 手機版的化簡計算
     if (IS_MOBILE) {
         let simplify = C.MOBILE_SIMPLIFIER;
-        baseMinGap *= (1.0 + simplify * 0.5);   // simplify=1 時，間距寬鬆 1.5 倍
-        baseDoubleProb *= (1.0 - simplify * 0.8); // simplify=1 時，雙鍵機率降至 20%
+        baseMinGap *= (1.0 + simplify * 0.5);       // simplify=1 時，間距寬鬆 1.5 倍
+        baseCrossGap *= (1.0 + simplify * 0.2);     // 稍微放寬階梯間距
+        baseDoubleProb *= (1.0 - simplify * 0.8);   // simplify=1 時，雙鍵機率降至 20%
     }
     
     return {
         minGap: baseMinGap,
+        crossGap: baseCrossGap,
         doubleProb: Math.max(0, Math.min(1, baseDoubleProb)),
         allowLN: diffMod.allowLN,
         maxSpecial: 999
@@ -1936,10 +1940,12 @@ function generateBeatmap(buffer, diffScale) {
     const snap = (time) => Math.round(time / snapGrid) * snapGrid;
 
     let minGap = diffCfg.minGap;
+    let crossGap = diffCfg.crossGap;
     let doubleProb = diffCfg.doubleProb;
 
     let bpmComp = Math.max(1.0, G.bpm / 130); 
     minGap *= bpmComp;
+    crossGap *= bpmComp;
 
     const chunkSize = Math.floor(sampleRate * 0.015); 
     let chunks = [];
@@ -2075,12 +2081,15 @@ function generateBeatmap(buffer, diffScale) {
         let isMelody = !isKick && !isSnare && c.high > c.avgHigh * 1.15 && c.high > 0.01;
 
         let currentMinGap = minGap;
+        let currentCrossGap = crossGap;
         let currentDoubleProb = doubleProb;
         if (isChorus) {
             currentMinGap *= 0.8; 
+            currentCrossGap *= 0.8;
             currentDoubleProb *= 1.5; 
         }
         currentMinGap = Math.max(IS_MOBILE ? 0.15 : 0.08, snap(currentMinGap)); 
+        currentCrossGap = Math.max(0.04, snap(currentCrossGap)); // 確保最小階梯間距
 
         if (isKick || isSnare || isMelody) {
             let candidateLanes = [];
@@ -2097,7 +2106,12 @@ function generateBeatmap(buffer, diffScale) {
                 }
             } else {
                 let globalLastTime = Math.max(...lastNoteTime);
-                if (t - globalLastTime < currentMinGap) continue;
+                let timeSinceLastNote = t - globalLastTime;
+                
+                // 階梯防重疊機制 (防過於密集的單鍵)
+                if (timeSinceLastNote > 0 && timeSinceLastNote < currentCrossGap) continue;
+                // 原本的整體軌道密度限制
+                if (timeSinceLastNote < currentMinGap && currentActiveLNs === 0) continue;
 
                 if (isKick || (isSnare && isChorus)) {
                     if (sRand(2) < currentDoubleProb) { 
@@ -3661,8 +3675,13 @@ async function loadSysBGM() {
     bgmState.loading = false;
 
     if (bgmState.pendingPlay) {
-        playSystemMusic(bgmState.pendingPlay.type, bgmState.pendingPlay.vol);
-        bgmState.pendingPlay = null;
+        // 如果載入完成時，玩家已經進入遊戲或選曲畫面，就不要播放標題音樂防重疊
+        if (bgmState.pendingPlay.type === 'menu' && G.screen !== 'MENU') {
+            bgmState.pendingPlay = null;
+        } else {
+            playSystemMusic(bgmState.pendingPlay.type, bgmState.pendingPlay.vol);
+            bgmState.pendingPlay = null;
+        }
     }
 }
 
@@ -3810,6 +3829,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const volSlider = document.getElementById('volume-slider'); const volDisplay = document.getElementById('volume-display');
     const offsetSlider = document.getElementById('offset-slider'); const offsetDisplay = document.getElementById('offset-display');
 
+    // 加入防呆監聽器，防止手機待機或背景過久導致 Web Audio 被瀏覽器凍結
+    document.addEventListener('touchstart', () => {
+        if (actx && actx.state === 'suspended') actx.resume();
+    }, { passive: true });
+
     document.addEventListener('fullscreenchange', () => {
         if (document.fullscreenElement && navigator.keyboard && navigator.keyboard.lock) {
             navigator.keyboard.lock(['Escape']).catch(e => {});
@@ -3852,16 +3876,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     if (startOverlay) {
-        startOverlay.onclick = () => { 
-            if (actx.state === 'suspended') actx.resume(); 
+        startOverlay.onclick = async () => { 
+            if (actx.state === 'suspended') await actx.resume(); 
             
-            // 強制解鎖 Web Audio API (給 iOS 靜音模式的補強)
-            const osc = actx.createOscillator();
-            osc.connect(actx.destination);
-            osc.start(0);
-            osc.stop(actx.currentTime + 0.001);
+            // 強制解鎖 Web Audio API (給 iOS 靜音模式的最強補強)
+            // 建立極短的空音訊並利用 buffer source 播放
+            const unlockSource = actx.createBufferSource();
+            unlockSource.buffer = actx.createBuffer(1, 1, 22050);
+            unlockSource.connect(actx.destination);
+            unlockSource.start(0);
 
-            // 解鎖 HTML5 Audio 標籤，不使用 muted = true，改用 volume = 0
+            // 解鎖 HTML5 Audio 標籤
             ['menu-bgm', 'bgm-clear', 'bgm-fail'].forEach(id => {
                 const el = document.getElementById(id);
                 if(el) { 
