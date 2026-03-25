@@ -24,7 +24,7 @@
     <meta name="application-name" content="Dynabeats: Infinite">
     
     
-    <title>Dynabeats: Infinite-v1.23</title>
+    <title>Dynabeats: Infinite-v1.25</title>
     <meta name="description" content="✦ Welcome to the world of rhythm games ✦">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jsmediatags/3.9.5/jsmediatags.min.js"></script>
     <style>
@@ -675,7 +675,7 @@
 	
         <h2 style="color: var(--neon-blue); text-shadow: 0 0 15px var(--neon-blue); font-size: 30px; letter-spacing: 5px; animation: pulse 1.5s infinite;">TAP TO START</h2>
 
-	<p style="color: #888; letter-spacing: 1px; margin-top: 40px; padding-left-right: 20px;">Version 1.23</p>
+	<p style="color: #888; letter-spacing: 1px; margin-top: 40px; padding-left-right: 20px;">Version 1.25a</p>
 
 <p style="color: #888; letter-spacing: 1px; margin-top: 40px; padding: 0 20px;">Developed by CurryTarou</p>
 <p style="color: #666; font-size: 0.9em; margin-top: -15px; padding: 0 20px;">in collaboration with Google Gemini</p>
@@ -689,7 +689,7 @@
 	    <h1 style="margin-bottom: 0px; font-size: 3rem; "><img src="assets/logo.svg" class="main-logo-svg" onerror="this.style.display='none'"></h1>
 
 	<h3 style="color:#fff; margin-top: 0px; margin-bottom: 20px; text-align: center;" data-i18n="wellcome">✦ Welcome to the world of rhythm games ✦</h3>
-        <h3 style="color:#fff; margin-top:0px; margin-bottom: 40px; text-align: center;">Development Version 1.23</h3>
+        <h3 style="color:#fff; margin-top:0px; margin-bottom: 40px; text-align: center;">Development Version 1.25a</h3>
 	
         <div class="file-zone" style="margin-bottom: 10px;">
             <div class="file-box" id="box-folder" onclick="document.getElementById('inp-folder').click()">
@@ -1046,7 +1046,7 @@ const GAME_CONFIG = {
     DIFFICULTIES: {
         'EASY': { id: 'EASY', color: '#00ff00', label: 'EASY', minGap: 0.12, doubleProb: 0.05, allowLN: false, hitWindowScale: 1.2, stairShiftMult: 2.0, density: 0.8 },
         'NORMAL': { id: 'NORMAL', color: 'var(--neon-blue)', label: 'NORMAL', minGap: 0.10, doubleProb: 0.15, allowLN: true, hitWindowScale: 1.0, stairShiftMult: 1.0, density: 1.0 },
-        'HARD': { id: 'HARD', color: 'var(--neon-pink)', label: 'HARD', minGap: 0.08, doubleProb: 0.30, allowLN: true, hitWindowScale: 1.0, stairShiftMult: 0.5, density: 1.4 }
+        'HARD': { id: 'HARD', color: 'var(--neon-pink)', label: 'HARD', minGap: 0.07, doubleProb: 0.30, allowLN: true, hitWindowScale: 1.0, stairShiftMult: 0.5, density: 1.2 }
     },
     MOBILE_SIMPLIFIER: 0.4, 
     COLORS: { NOTE_LANES: ['#ff0055', '#ffffff', '#ffffff', '#ff0055'], NEON_BLUE: '#00f3ff', NEON_GOLD: '#ffcc00', NEON_RED: '#ff3333', LANE_WIDTH: 130, NOTE_HEIGHT: 26, HIT_SCALE: 5.0 },
@@ -1079,7 +1079,7 @@ let G = {
     keysHeld: [false, false, false, false],
     lineGlow: 0, comboTimer: null, 
     lastTapTime: [0, 0, 0, 0], domKeys: [],
-    audioOffset: 0.000, baseOffset: IS_MOBILE ? 0.775 : 0.700, userOffset: 0.000,
+    audioOffset: 0.000, baseOffset: IS_MOBILE ? -0.080 : 0.000, userOffset: 0.000,
     virtualTime: 0, lastFrameTime: 0, lastAnalysisTime: 0,
     lastHudUpdate: { hp: -1, fever: -1, combo: -1 }, volume: 0.5,
     videoSourceNode: null, freqDataArray: null,
@@ -1111,8 +1111,6 @@ function getRequiredHits(levelIndex) {
 
 function resizeCanvas() {
     IS_MOBILE = checkMobileMode();
-    G.baseOffset = IS_MOBILE ? 0.600 : 0.525;
-    G.audioOffset = G.baseOffset + G.userOffset;
 
     const stage = document.getElementById('gear-stage');
     if (stage) {
@@ -1687,22 +1685,29 @@ function generateBeatmap(buffer, diffId) {
     specialNoteTimes.forEach(t => { G.masterNotes.push({ isSpecial: true, time: t, endTime: t, hit: false, missed: false, isDead: false, lane: -1 }); });
     G.masterNotes.sort((a,b) => a.time - b.time);
 
-    let MIN_CROSS_LANE_GAP = Math.max(snapGrid * diffCfg.stairShiftMult, diffCfg.minGap * 0.75);
-    let lastShiftedTime = -999; let lastOriginalTime = -999;
+    // 移除全局推移邏輯，改為「單一軌道防暴走」，讓音符 100% 貼合原本的節拍
+    let cleanedNotes = [];
+    let laneLastTime = [-999, -999, -999, -999];
+    // 手機版防手殘：同軌道音符若小於 50ms (肉眼與手指無法分辨) 則過濾，其餘完全保留原音準
+    let MIN_LANE_GAP = 0.05;
+
     for (let i = 0; i < G.masterNotes.length; i++) {
-        let note = G.masterNotes[i]; if (note.isSpecial) continue; 
-        let orig = note.time;
-        if (orig > lastOriginalTime + 0.005) { 
-            let targetTime = Math.max(orig, lastShiftedTime + MIN_CROSS_LANE_GAP);
-            if (targetTime - orig > 0.45) targetTime = orig + 0.45;
-            let shiftDelta = targetTime - orig; note.time += shiftDelta; note.endTime += shiftDelta; if(note.spawnTime) note.spawnTime += shiftDelta;
-            lastShiftedTime = note.time; lastOriginalTime = orig;
-        } else {
-            let shiftDelta = lastShiftedTime - lastOriginalTime; note.time += shiftDelta; note.endTime += shiftDelta; if(note.spawnTime) note.spawnTime += shiftDelta;
+        let note = G.masterNotes[i]; 
+        if (note.isSpecial) { cleanedNotes.push(note); continue; } 
+        
+        // 核心優化：只針對「同一條軌道」檢查。如果同軌道音符過於不合理密集才捨棄，不影響整體譜面的時間軸
+        if (note.time - laneLastTime[note.lane] < MIN_LANE_GAP) {
+            continue; 
         }
+        
+        laneLastTime[note.lane] = note.time;
+        cleanedNotes.push(note);
     }
-    G.masterNotes.sort((a,b) => a.time - b.time); G.totalNotes = G.masterNotes.length;
-}
+    
+    G.masterNotes = cleanedNotes;
+    G.masterNotes.sort((a,b) => a.time - b.time); 
+    G.totalNotes = G.masterNotes.length;
+} // generateBeatmap 結束
 
 function analyzeBPM(audioBuffer) {
     if (!audioBuffer) return GAME_CONFIG.AUDIO.DEFAULT_BPM;
@@ -1917,8 +1922,8 @@ function loop() {
     const diffCfg = GAME_CONFIG.DIFFICULTIES[G.currentDiffId] || GAME_CONFIG.DIFFICULTIES['NORMAL'];
     let wScale = diffCfg.hitWindowScale * (IS_MOBILE ? GAME_CONFIG.JUDGEMENT.MOBILE_HIT_WINDOW_SCALE : 1.0);
     if (G.judgeBufferTimer > 0) wScale *= 1.5; 
-    const maxGoodWindow = 0.15 * wScale;
-    const missThreshold = -(maxGoodWindow + 0.05);
+    const maxGoodWindow = 0.250 * wScale; 
+    const missThreshold = -(maxGoodWindow + 0.01);
 
     let resolvedCount = 0;
 
@@ -2239,8 +2244,12 @@ function handleInputStart(idx, isTouch = false) {
         let wScale = diffCfg.hitWindowScale * (isTouch ? GAME_CONFIG.JUDGEMENT.MOBILE_HIT_WINDOW_SCALE : 1.0);
         if (G.judgeBufferTimer > 0) wScale *= 1.5; 
         
-        const winPerfect = 0.05 * wScale; const winGreat = 0.10 * wScale; const winGood = 0.15 * wScale; const searchRange = winGood * 1.5; 
-        const missThreshold = -(winGood + 0.05);
+        const winPerfect = 0.045 * wScale; 
+        const winGreat = 0.090 * wScale; 
+        const winGood = 0.150 * wScale; 
+        const winGoodLate = 0.250 * wScale; 
+        const searchRange = winGoodLate; 
+        const missThreshold = -(winGoodLate + 0.01);
 
         const possibleNotes = G.notes.filter(n => n.lane === idx && !n.hit && !n.missed && n.time - targetTime >= missThreshold && n.time - targetTime <= searchRange).sort((a, b) => a.time - b.time);
         let noteHitOccurred = false;
@@ -2248,19 +2257,25 @@ function handleInputStart(idx, isTouch = false) {
         const closeSpecial = isTouch && G.notes.some(n => n.isSpecial && !n.hit && !n.missed && Math.abs(n.time - targetTime) <= 0.35);
 
         for (let note of possibleNotes) {
-            const timeDiff = note.time - targetTime; const diff = Math.abs(timeDiff); 
+            const timeDiff = note.time - targetTime; 
+            const diff = Math.abs(timeDiff); 
             
             if (closeSpecial && timeDiff > winPerfect) continue;
 
-            if (diff > winGood) {
+            const isValidHit = (timeDiff >= 0 && timeDiff <= winGood) || (timeDiff < 0 && Math.abs(timeDiff) <= winGoodLate);
+
+            if (!isValidHit) {
                 const isEarlyMissEnabled = isTouch ? GAME_CONFIG.JUDGEMENT.MOBILE_STRICT_EARLY_MISS : GAME_CONFIG.JUDGEMENT.STRICT_EARLY_MISS;
-                if (timeDiff > 0 && !isEarlyMissEnabled) continue; 
+                if (timeDiff > winGood && !isEarlyMissEnabled) continue; 
                 else { note.hit = true; note.missed = true; triggerJudge('MISS', idx, note); break; }
             } else {
                 note.hit = true; note.hitTime = actualNow; noteHitOccurred = true;
                 if (note.isLong) note.isHolding = true;
                 else {
-                    let res = 'GOOD'; if (diff <= winPerfect) res = 'PERFECT'; else if (diff <= winGreat) res = 'GREAT';
+                    let res = 'GOOD'; 
+                    if (diff <= winPerfect) res = 'PERFECT'; 
+                    else if (diff <= winGreat) res = 'GREAT'; 
+                    else res = 'GOOD'; 
                     triggerJudge(res, idx, note);
                 }
                 break; 
@@ -2272,28 +2287,61 @@ function handleInputStart(idx, isTouch = false) {
 
 function handleInputEnd(idx) {
     if (idx !== -1) {
-        G.keysHeld[idx] = false; let actualNow = G.virtualTime;
+        G.keysHeld[idx] = false; 
+        let actualNow = G.virtualTime;
+        
         if (G.screen === 'TUTORIAL') {
             if (G.tutPhase === 3 && idx === G.tutExpectedLane) {
                 let note = G.notes[0];
                 if (note) {
-                    if (G.tutFrozen && G.tutExpectedAction === 'RELEASE') { G.tutFrozen = false; hideTutPrompt(); note.isHolding = false; note.processedEnd = true; triggerJudge('PERFECT', idx, note); setTimeout(advanceTutPhase4, 1000); } 
-                    else if (!G.tutFrozen && G.tutExpectedAction === 'WAIT_TAIL') { G.tutFrozen = true; note.isHolding = false; G.tutExpectedAction = 'REHOLD'; showTutPromptForCurrentState(); }
+                    if (G.tutFrozen && G.tutExpectedAction === 'RELEASE') { 
+                        G.tutFrozen = false; 
+                        hideTutPrompt(); 
+                        note.isHolding = false; 
+                        note.processedEnd = true; 
+                        triggerJudge('PERFECT', idx, note); 
+                        setTimeout(advanceTutPhase4, 1000); 
+                    } else if (!G.tutFrozen && G.tutExpectedAction === 'WAIT_TAIL') { 
+                        G.tutFrozen = true; 
+                        note.isHolding = false; 
+                        G.tutExpectedAction = 'REHOLD'; 
+                        showTutPromptForCurrentState(); 
+                    }
                 }
             }
-            const el = document.getElementById(`k${idx}`); if (el) el.classList.remove('active'); return; 
+            const el = document.getElementById(`k${idx}`); 
+            if (el) el.classList.remove('active'); 
+            return; 
         }
         
         const longNote = G.notes.find(n => n.lane === idx && n.isLong && n.isHolding && !n.processedEnd);
         if (longNote) {
-            longNote.isHolding = false; longNote.processedEnd = true; const diff = Math.abs(longNote.endTime - (actualNow + G.audioOffset)); 
-            
+            longNote.isHolding = false; 
+            longNote.processedEnd = true; 
+
             const diffCfg = GAME_CONFIG.DIFFICULTIES[G.currentDiffId] || GAME_CONFIG.DIFFICULTIES['NORMAL'];
             let wScale = diffCfg.hitWindowScale * (IS_MOBILE ? GAME_CONFIG.JUDGEMENT.MOBILE_HIT_WINDOW_SCALE : 1.0);
             if (G.judgeBufferTimer > 0) wScale *= 1.5; 
             
-            const winPerfect = 0.05 * wScale; const winGreat = 0.10 * wScale; const winGood = 0.15 * wScale;
-            if (diff <= winPerfect) triggerJudge('PERFECT', idx, longNote); else if (diff <= winGreat) triggerJudge('GREAT', idx, longNote); else if (diff <= winGood) triggerJudge('GOOD', idx, longNote); else { longNote.missed = true; triggerJudge('MISS', idx, longNote); }
+            const winPerfect = 0.045 * wScale; 
+            const winGreat = 0.090 * wScale; 
+            const winGood = 0.150 * wScale; 
+            const winGoodLate = 0.250 * wScale;
+            
+            const timeDiff = longNote.endTime - (actualNow + G.audioOffset);
+            const diff = Math.abs(timeDiff); 
+            const isLate = timeDiff < 0;
+
+            const isValidHit = (timeDiff >= 0 && diff <= winGood) || (isLate && diff <= winGoodLate);
+
+            if (isValidHit) {
+                if (diff <= winPerfect) triggerJudge('PERFECT', idx, longNote); 
+                else if (diff <= winGreat) triggerJudge('GREAT', idx, longNote); 
+                else triggerJudge('GOOD', idx, longNote); 
+            } else { 
+                longNote.missed = true; 
+                triggerJudge('MISS', idx, longNote); 
+            }
         }
         const el = document.getElementById(`k${idx}`); if (el) el.classList.remove('active');
     }
