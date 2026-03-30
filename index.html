@@ -289,6 +289,26 @@
             button:hover { background: var(--neon-blue); color: #000; box-shadow: 0 0 30px rgba(0, 243, 255, 0.6); transform: scale(1.05); }
         }
         button:active { background: var(--neon-blue); color: #000; box-shadow: 0 0 30px rgba(0, 243, 255, 0.6); transform: scale(1.05); }
+	
+	.btn-expert { 
+            color: #d500f9 !important; 
+            border-color: #d500f9 !important; 
+            text-shadow: 0 0 10px #d500f9 !important; 
+        }
+        @media (hover: hover) and (pointer: fine) {
+            .btn-expert:hover { 
+                background: #d500f9 !important; 
+                color: #000 !important; 
+                box-shadow: 0 0 30px rgba(213, 0, 249, 0.6) !important; 
+                transform: scale(1.05); 
+            }
+        }
+        .btn-expert:active { 
+            background: #d500f9 !important; 
+            color: #000 !important; 
+            box-shadow: 0 0 30px rgba(213, 0, 249, 0.6) !important; 
+            transform: scale(1.05); 
+        }
 
         .file-zone { display: flex; gap: 40px; margin-bottom: 30px; pointer-events: auto; justify-content: center;}
         .file-box { 
@@ -786,7 +806,7 @@
                 <button tabindex="-1" onclick="playMenuImpact(); initSelectedGame('EASY')">EASY</button>
                 <button tabindex="-1" onclick="playMenuImpact(); initSelectedGame('NORMAL')">NORMAL</button>
                 <button tabindex="-1" onclick="playMenuImpact(); initSelectedGame('HARD')">HARD</button>
-                <button tabindex="-1" onclick="playMenuImpact(); initSelectedGame('EXPERT')" style="color: #d500f9; border-color: #d500f9; text-shadow: 0 0 10px #d500f9;">EXPERT</button>
+                <button tabindex="-1" class="btn-expert" onclick="playMenuImpact(); initSelectedGame('EXPERT')">EXPERT</button>
             </div>
         </div>
     </div>
