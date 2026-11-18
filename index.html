@@ -1855,7 +1855,8 @@ function startAssetHitSound(kind,loop=false){
     const buffer=ge[kind];
     if(!buffer||!re||!Ie||activeHitVoices.size>=MAX_ACTIVE_HIT_VOICES)return null;
     const source=re.createBufferSource(),gain=re.createGain(),now=re.currentTime;
-    source.buffer=buffer;gain.gain.setValueAtTime("hit"===kind?TAP_SOUND_GAIN:"showtime"===kind?SHOWTIME_SOUND_GAIN:"heavyHit"===kind?SPECIAL_SOUND_GAIN:HIT_SOUND_GAIN,now);source.connect(gain);gain.connect("hit"===kind&&generatedHitFx?generatedHitFx.highpass:Ie);
+    const isShowtime=kind==="showtime";
+    source.buffer=buffer;gain.gain.setValueAtTime(isShowtime?SHOWTIME_SOUND_GAIN*.5*o.volume:"hit"===kind?TAP_SOUND_GAIN:"heavyHit"===kind?SPECIAL_SOUND_GAIN:HIT_SOUND_GAIN,now);source.connect(gain);gain.connect(isShowtime?re.destination:"hit"===kind&&generatedHitFx?generatedHitFx.highpass:Ie);
     const voice={source:source,gain:gain,audio:null,loop:!1};activeHitVoices.add(source);
     source.onended=()=>{activeHitVoices.delete(source);try{source.disconnect();gain.disconnect()}catch(error){}};
     source.start(now);
