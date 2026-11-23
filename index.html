@@ -1076,15 +1076,16 @@
         #song-select-screen .ss-header { min-height: 62px; padding-top: 9px; padding-bottom: 9px; box-sizing: border-box; }
         #song-select-screen .ss-title { line-height: 1.25; }
         @media (max-width: 900px), (pointer: coarse) {
-            :root { --control-min-height: 44px; }
-            button { padding-block: 9px; }
+            :root { --control-min-height: 40px; }
+            button { padding-block: 6px; }
+            #home-settings-btn, #song-select-screen .ss-settings-btn { min-height: 40px; }
             #song-select-screen .ss-header { min-height: 60px; padding-top: 8px; padding-bottom: 8px; }
             #song-select-screen .ss-title { line-height: 1.25; }
-            #song-select-screen .ss-album-tab-btn { height: 44px; }
-            #song-select-screen .ss-speed-wrap .diff-btn { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; }
-            #song-select-screen .ss-diff-wrap button { min-height: 44px; }
-            #result-screen .btn-group button, #pause-screen .btn-group button { min-height: 44px; }
-            .settings-panel button, .calibration-actions button { min-height: 44px; }
+            #song-select-screen .ss-album-tab-btn { height: 40px; }
+            #song-select-screen .ss-speed-wrap .diff-btn { width: 40px !important; height: 40px !important; min-width: 40px !important; min-height: 40px !important; }
+            #song-select-screen .ss-diff-wrap button { min-height: 40px; }
+            #result-screen .btn-group button, #pause-screen .btn-group button { min-height: 40px; }
+            .settings-panel button, .calibration-actions button { min-height: 40px; }
         }
 
         /* Share the same neon control language and keep the select-screen settings control inside its header. */
@@ -1123,10 +1124,10 @@
         @media (max-width: 520px) {
             #song-select-screen .ss-settings-btn {
                 right: max(8px, env(safe-area-inset-right));
-                width: 44px;
-                min-width: 44px;
-                max-width: 44px;
-                height: 44px;
+                width: 40px;
+                min-width: 40px;
+                max-width: 40px;
+                height: 40px;
                 padding: 0;
                 gap: 0;
                 justify-content: center;
@@ -1142,7 +1143,11 @@
                 white-space: nowrap;
                 border: 0;
             }
-            #song-select-screen .ss-settings-btn .home-settings-icon { font-size: 20px; }
+            #song-select-screen .ss-settings-btn .home-settings-icon { font-size: 18px; }
+        }
+
+        @media (max-width: 900px), (pointer: coarse) {
+            #home-settings-btn, #song-select-screen .ss-settings-btn { min-height: 40px; }
         }
 
 </style>
