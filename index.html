@@ -1231,9 +1231,29 @@
         body.mobile-layout #song-select-screen .ss-speed-wrap { gap: 5px; }
         body.mobile-layout #song-select-screen .ss-speed-wrap .diff-btn,
         body.mobile-layout #song-select-screen .ss-diff-wrap button { min-height: 34px !important; }
-        body.mobile-layout #song-select-screen .ss-speed-wrap .diff-btn { width: 34px !important; height: 34px !important; min-width: 34px !important; }
+        body.mobile-layout #song-select-screen .ss-speed-wrap .diff-btn,
+        body.mobile-layout #pause-screen .ss-speed-wrap .diff-btn {
+            width: 34px !important;
+            height: 34px !important;
+            min-width: 34px !important;
+            min-height: 34px !important;
+            flex: 0 0 34px;
+            padding: 0 !important;
+            box-sizing: border-box !important;
+        }
         body.mobile-layout #song-select-screen .ss-diff-wrap { gap: 4px; }
         body.mobile-layout #song-select-screen .ss-diff-wrap button { padding: 3px 2px; font-size: 11px; }
+
+        /* Keep desktop speed steppers square despite the shared 46px control minimum. */
+        body:not(.mobile-layout) #song-select-screen .ss-speed-wrap .diff-btn,
+        body:not(.mobile-layout) #pause-screen .ss-speed-wrap .diff-btn {
+            width: 40px !important;
+            height: 40px !important;
+            min-width: 40px !important;
+            min-height: 40px !important;
+            flex: 0 0 40px;
+            padding: 0 !important;
+        }
 
 </style>
 </head>
