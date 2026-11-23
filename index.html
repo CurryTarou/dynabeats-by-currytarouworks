@@ -1151,6 +1151,41 @@
             #home-settings-btn, #song-select-screen .ss-settings-btn { min-height: 34px; }
         }
 
+
+        /* Compact the landscape song picker so the difficulty choices stay on-screen. */
+        @media (orientation: landscape) and (max-height: 700px), (orientation: landscape) and (pointer: coarse) and (max-height: 850px) {
+            #song-select-screen:not(.hidden) {
+                grid-template-rows: 52px 34px minmax(0,1fr);
+                gap: 4px 9px;
+                padding: 0 9px 6px;
+            }
+            #song-select-screen .ss-header { min-height: 52px; padding: 4px 9px; }
+            #song-select-screen .ss-btn-back { min-height: 34px; padding: 4px 9px; font-size: 12px; }
+            #song-select-screen .ss-title { font-size: clamp(17px,3vh,23px); line-height: 1.1; }
+            #song-select-screen .ss-album-tabs-container { padding: 0; }
+            #song-select-screen .ss-album-tabs { min-height: 34px; padding: 0; gap: 6px; }
+            #song-select-screen .ss-album-tab-btn {
+                height: 34px !important;
+                min-height: 34px !important;
+                padding: 2px 8px;
+                font-size: 11px;
+                line-height: 1.1;
+            }
+            #song-select-screen .ss-footer { padding: 6px; gap: 5px; overflow-y: auto; }
+            #song-select-screen .ss-info-bar { padding: 5px; gap: 4px; }
+            #song-select-screen .ss-cover { width: min(48%,24vh,190px); max-height: 24vh; }
+            #song-select-screen .ss-meta-title { font-size: clamp(12px,2.2vh,17px); line-height: 1.15; }
+            #song-select-screen .ss-meta-artist { font-size: clamp(10px,1.7vh,13px); line-height: 1.15; }
+            #song-select-screen .ss-options { gap: 2px; }
+            #song-select-screen .ss-controls { gap: 4px; }
+            #song-select-screen .ss-speed-wrap { gap: 5px; }
+            #song-select-screen .ss-speed-wrap .diff-btn,
+            #song-select-screen .ss-diff-wrap button { min-height: 34px !important; }
+            #song-select-screen .ss-speed-wrap .diff-btn { width: 34px !important; height: 34px !important; min-width: 34px !important; }
+            #song-select-screen .ss-diff-wrap { gap: 5px; }
+            #song-select-screen .ss-diff-wrap button { padding: 4px 2px; font-size: 11px; }
+        }
+
 </style>
 </head>
 <body>
