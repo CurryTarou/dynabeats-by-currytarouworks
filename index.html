@@ -1224,6 +1224,13 @@
             max-height: 36vh;
             margin: 0 auto;
         }
+        /* Tablets use the desktop cover proportion inside the touch layout. */
+        @media (min-width: 700px) and (pointer: coarse) {
+            body.mobile-layout #song-select-screen .ss-cover {
+                width: min(78%,56vh,520px);
+                max-height: 56vh;
+            }
+        }
         body.mobile-layout #song-select-screen .ss-meta-title { font-size: clamp(12px,2vh,16px); line-height: 1.1; }
         body.mobile-layout #song-select-screen .ss-meta-artist { font-size: clamp(10px,1.5vh,12px); line-height: 1.1; }
         body.mobile-layout #song-select-screen .ss-options { gap: 2px; }
