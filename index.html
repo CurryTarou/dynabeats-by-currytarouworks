@@ -1186,6 +1186,51 @@
             #song-select-screen .ss-diff-wrap button { padding: 4px 2px; font-size: 11px; }
         }
 
+
+        /* Keep touch song selection compact even on high-resolution tablets. */
+        body.mobile-layout #song-select-screen:not(.hidden) {
+            grid-template-rows: 52px 34px minmax(0,1fr) !important;
+            gap: 3px 8px !important;
+        }
+        body.mobile-layout #song-select-screen .ss-album-tabs-container {
+            min-height: 34px !important;
+            height: 34px !important;
+            padding: 0 !important;
+            overflow: hidden;
+        }
+        body.mobile-layout #song-select-screen .ss-album-tabs {
+            min-height: 34px !important;
+            height: 34px !important;
+            padding: 0 !important;
+            align-items: center;
+        }
+        body.mobile-layout #song-select-screen .ss-album-tab-btn {
+            box-sizing: border-box !important;
+            height: 34px !important;
+            min-height: 34px !important;
+            max-height: 34px !important;
+            padding: 0 8px !important;
+            line-height: 1.05 !important;
+            font-size: 11px !important;
+        }
+        body.mobile-layout #song-select-screen .ss-footer { padding: 6px; gap: 4px; overflow-y: auto; }
+        body.mobile-layout #song-select-screen .ss-info-bar { padding: 4px; gap: 3px; margin: 0; }
+        body.mobile-layout #song-select-screen .ss-cover {
+            width: min(46%,22vh,170px);
+            max-height: 22vh;
+            margin: 0 auto;
+        }
+        body.mobile-layout #song-select-screen .ss-meta-title { font-size: clamp(12px,2vh,16px); line-height: 1.1; }
+        body.mobile-layout #song-select-screen .ss-meta-artist { font-size: clamp(10px,1.5vh,12px); line-height: 1.1; }
+        body.mobile-layout #song-select-screen .ss-options { gap: 2px; }
+        body.mobile-layout #song-select-screen .ss-controls { gap: 4px; }
+        body.mobile-layout #song-select-screen .ss-speed-wrap { gap: 5px; }
+        body.mobile-layout #song-select-screen .ss-speed-wrap .diff-btn,
+        body.mobile-layout #song-select-screen .ss-diff-wrap button { min-height: 34px !important; }
+        body.mobile-layout #song-select-screen .ss-speed-wrap .diff-btn { width: 34px !important; height: 34px !important; min-width: 34px !important; }
+        body.mobile-layout #song-select-screen .ss-diff-wrap { gap: 4px; }
+        body.mobile-layout #song-select-screen .ss-diff-wrap button { padding: 3px 2px; font-size: 11px; }
+
 </style>
 </head>
 <body>
@@ -1630,7 +1675,7 @@ async function x(){document.getElementById("dl-btn-group").classList.add("hidden
 async function B(){if("demo-mv"===S){document.getElementById("dl-prompt-screen").classList.add("hidden");await loadDemoPack(!1);return}document.getElementById("dl-prompt-screen").classList.add("hidden");if("base"===S){document.getElementById("warmup-overlay").classList.add("hidden");document.getElementById("menu-main-content").style.visibility="hidden";document.getElementById("start-overlay").style.display="flex"}S=""}
 function R(){document.getElementById("dl-prompt-screen").classList.add("hidden");if("base"===S){document.getElementById("warmup-overlay").classList.add("hidden");document.getElementById("menu-main-content").style.visibility="hidden";document.getElementById("start-overlay").style.display="flex"}S=""}
 function F(){const i=e[t];document.getElementById("reset-prompt-screen").classList.remove("hidden"),document.getElementById("reset-progress-container").classList.add("hidden"),document.getElementById("reset-btn-group").classList.remove("hidden"),document.getElementById("reset-title").innerText=i.reset_title,document.getElementById("reset-desc").innerText=i.reset_desc,document.getElementById("reset-btn-yes").innerText=i.reset_ok,document.getElementById("reset-btn-no").innerText=i.reset_cancel,document.getElementById("reset-progress-bar").style.width="0%"}function O(){document.getElementById("reset-prompt-screen").classList.add("hidden")}async function clearDynabeatsCachedAssets(){if(!window.caches)return;const cacheNames=await caches.keys();for(const cacheName of cacheNames){let cache;try{cache=await caches.open(cacheName);const requests=await cache.keys();for(const request of requests){let pathname="";try{pathname=new URL(request.url,location.href).pathname}catch(error){}if(pathname.includes("/assets/demo_mode/"))try{await cache.delete(request)}catch(error){console.warn("A demo track cache entry could not be deleted.",error)}}}catch(error){console.warn("A game cache could not be inspected.",error)}if(cacheName==="dynabeats-assets-v1"||cacheName.startsWith("dynabeats-assets-"))try{await caches.delete(cacheName)}catch(error){console.warn("A game asset cache could not be deleted.",error)}}}
-async function P(){const i=e[t];document.getElementById("reset-btn-group").classList.add("hidden"),document.getElementById("reset-progress-container").classList.remove("hidden"),document.getElementById("reset-desc").innerText=i.resetting;let n=document.getElementById("reset-progress-bar");if(n.style.width="15%",window.caches)try{await clearDynabeatsCachedAssets()}catch(error){console.warn("Game cache could not be deleted.",error)}try{localStorage.removeItem("dynabeats-demo-audio-only")}catch(error){}stopSelectionPreview();stopSelectionVideoPreview();demoMemoryFiles.clear();demoAvailability={audio:[],video:[]};demoPackagedReady=!1;U=[];H=[];G=[];$=0;n.style.width="100%",setTimeout(()=>{document.getElementById("reset-prompt-screen").classList.add("hidden"),closeSettingsModal(),ht(),document.getElementById("menu-main-content").style.visibility="hidden",document.getElementById("start-overlay").style.display="flex",ye.loaded=!1,ye.failed=!1},600)}async function D(){try{if(s.ENABLE_BASE_ASSET_DOWNLOAD&&window.caches&&"file:"!==location.protocol){if(await A(I))return C();return M("base")}C()}catch(e){console.warn("Base asset initialization failed.",e);C()}}function C(){document.getElementById("start-overlay").style.display="none",document.getElementById("menu-main-content").style.visibility="visible",Et(),gt(),showInitialTutorialOffer()}let onboardingPromptShown=!1;function showInitialTutorialOffer(){if(onboardingPromptShown)return;let seen=!1;try{seen="true"===localStorage.getItem("dynabeats-tutorial-offer-done")}catch(error){}if(seen)return;onboardingPromptShown=!0;const modal=document.getElementById("tutorial-offer-modal");modal&&modal.classList.remove("hidden")}function chooseTutorialOffer(enterTutorial){const modal=document.getElementById("tutorial-offer-modal");modal&&modal.classList.add("hidden");try{localStorage.setItem("dynabeats-tutorial-offer-done","true")}catch(error){}if(enterTutorial)Ke()}function isLocalDemoOrigin(){return"file:"===location.protocol||"localhost"===location.hostname||"127.0.0.1"===location.hostname||"[::1]"===location.hostname||!["http:","https:"].includes(location.protocol)}
+async function P(){const i=e[t];document.getElementById("reset-btn-group").classList.add("hidden"),document.getElementById("reset-progress-container").classList.remove("hidden"),document.getElementById("reset-desc").innerText=i.resetting;let n=document.getElementById("reset-progress-bar");if(n.style.width="15%",window.caches)try{await clearDynabeatsCachedAssets()}catch(error){console.warn("Game cache could not be deleted.",error)}try{localStorage.removeItem("dynabeats-demo-audio-only");localStorage.removeItem("dynabeats-tutorial-offer-done");localStorage.removeItem("dynabeats-user-offset")}catch(error){}onboardingPromptShown=!1;o.userOffset=0;refreshAudioOffset();const offsetSlider=document.getElementById("offset-slider"),offsetDisplay=document.getElementById("offset-display");offsetSlider&&(offsetSlider.value="0");offsetDisplay&&(offsetDisplay.innerText="0.000s");stopSelectionPreview();stopSelectionVideoPreview();demoMemoryFiles.clear();demoAvailability={audio:[],video:[]};demoPackagedReady=!1;U=[];H=[];G=[];$=0;n.style.width="100%",setTimeout(()=>{document.getElementById("reset-prompt-screen").classList.add("hidden"),closeSettingsModal(),ht(),document.getElementById("menu-main-content").style.visibility="hidden",document.getElementById("start-overlay").style.display="flex",ye.loaded=!1,ye.failed=!1},600)}async function D(){try{if(s.ENABLE_BASE_ASSET_DOWNLOAD&&window.caches&&"file:"!==location.protocol){if(await A(I))return C();return M("base")}C()}catch(e){console.warn("Base asset initialization failed.",e);C()}}function C(){document.getElementById("start-overlay").style.display="none",document.getElementById("menu-main-content").style.visibility="visible",Et(),gt(),showInitialTutorialOffer()}let onboardingPromptShown=!1;function showInitialTutorialOffer(){if(onboardingPromptShown)return;let seen=!1;try{seen="true"===localStorage.getItem("dynabeats-tutorial-offer-done")}catch(error){}if(seen)return;onboardingPromptShown=!0;const modal=document.getElementById("tutorial-offer-modal");modal&&modal.classList.remove("hidden")}function chooseTutorialOffer(enterTutorial){const modal=document.getElementById("tutorial-offer-modal");modal&&modal.classList.add("hidden");try{localStorage.setItem("dynabeats-tutorial-offer-done","true")}catch(error){}if(enterTutorial)Ke()}function isLocalDemoOrigin(){return"file:"===location.protocol||"localhost"===location.hostname||"127.0.0.1"===location.hostname||"[::1]"===location.hostname||!["http:","https:"].includes(location.protocol)}
 function getDesktopRequire(){try{if(typeof window.require==="function")return window.require}catch(error){}try{if(typeof require==="function")return require}catch(error){}return null}
 function isPackagedDesktopRuntime(){const processRef=window.process||null,bridge=window.DynabeatsDesktop||window.dynabeatsDesktop||window.electronAPI;return!!(bridge&&"function"==typeof bridge.readAsset||processRef&&processRef.versions&&(processRef.versions.electron||processRef.versions.nw)||window.nw||getDesktopRequire())}
 let demoPackagedReady=!1;
