@@ -1069,6 +1069,23 @@
         @media (prefers-reduced-motion: reduce) {
             .demo-new-badge { animation:none; }
         }
+
+        /* Keep primary controls comfortably tappable and visually consistent. */
+        :root { --control-min-height: 46px; }
+        button { min-height: var(--control-min-height); box-sizing: border-box; line-height: 1.15; }
+        #song-select-screen .ss-header { min-height: 62px; padding-top: 9px; padding-bottom: 9px; box-sizing: border-box; }
+        #song-select-screen .ss-title { line-height: 1.25; }
+        @media (max-width: 900px), (pointer: coarse) {
+            :root { --control-min-height: 44px; }
+            button:not(.settings-close) { padding-block: 9px; }
+            #song-select-screen .ss-header { min-height: 60px; padding-top: 8px; padding-bottom: 8px; }
+            #song-select-screen .ss-title { line-height: 1.25; }
+            #song-select-screen .ss-album-tab-btn { height: 44px; }
+            #song-select-screen .ss-speed-wrap .diff-btn { width: 44px !important; height: 44px !important; min-width: 44px !important; min-height: 44px !important; }
+            #song-select-screen .ss-diff-wrap button { min-height: 44px; }
+            #result-screen .btn-group button, #pause-screen .btn-group button { min-height: 44px; }
+            .settings-panel button, .calibration-actions button { min-height: 44px; }
+        }
 </style>
 </head>
 <body>
